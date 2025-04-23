@@ -1,20 +1,31 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
+	"os"
 	"sync/atomic"
+
+	_ "github.com/lib/pq"
+	"github.com/ywallis/chirpy/internal/database"
 )
 
 type apiConfig struct {
 	fileServerHits atomic.Int32
+	db *database.Queries
 }
 
 func main() {
-
+	dbURL := os.Getenv("DB_URL")
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		fmt.Println("Error opening DB")
+	}
+	dbQueries := database.New(db)
 	const filePathRoot string = "."
 	const port string = "8080"
-	apiCfg := apiConfig{}
+	apiCfg := apiConfig{db: dbQueries}
 	server := http.NewServeMux()
 
 	s := http.Server{
@@ -27,6 +38,7 @@ func main() {
 	server.HandleFunc("GET /api/healthz", readinessHandler)
 	server.HandleFunc("GET /admin/metrics", apiCfg.metricsHandler)
 	server.HandleFunc("POST /admin/reset", apiCfg.metricsResetHandler)
+	server.HandleFunc("POST /api/validate_chirp", handlerChirpsValidate)
 	server.Handle("GET /api/hello", middlewareLogger(middlewareAuth(http.HandlerFunc(helloHandler))))
 	if err := s.ListenAndServe(); err != nil {
 		fmt.Printf("Error while starting server: %s\n", err)
