@@ -7,6 +7,7 @@ import (
 	"os"
 	"sync/atomic"
 
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/ywallis/chirpy/internal/database"
 )
@@ -17,7 +18,9 @@ type apiConfig struct {
 }
 
 func main() {
+	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
+	fmt.Println(dbURL)
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		fmt.Println("Error opening DB")
@@ -37,6 +40,7 @@ func main() {
 	server.Handle("/app/", http.StripPrefix("/app", apiCfg.middlewareMetricsInc(fileHandler)))
 	server.HandleFunc("GET /api/healthz", readinessHandler)
 	server.HandleFunc("GET /admin/metrics", apiCfg.metricsHandler)
+	server.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
 	server.HandleFunc("POST /admin/reset", apiCfg.metricsResetHandler)
 	server.HandleFunc("POST /api/validate_chirp", handlerChirpsValidate)
 	server.Handle("GET /api/hello", middlewareLogger(middlewareAuth(http.HandlerFunc(helloHandler))))
