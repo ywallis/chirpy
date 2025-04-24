@@ -15,12 +15,13 @@ import (
 type apiConfig struct {
 	fileServerHits atomic.Int32
 	db *database.Queries
+	platform string
 }
 
 func main() {
 	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
-	fmt.Println(dbURL)
+	platform := os.Getenv("PLATFORM")
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		fmt.Println("Error opening DB")
@@ -28,7 +29,7 @@ func main() {
 	dbQueries := database.New(db)
 	const filePathRoot string = "."
 	const port string = "8080"
-	apiCfg := apiConfig{db: dbQueries}
+	apiCfg := apiConfig{db: dbQueries, platform: platform}
 	server := http.NewServeMux()
 
 	s := http.Server{
@@ -41,8 +42,9 @@ func main() {
 	server.HandleFunc("GET /api/healthz", readinessHandler)
 	server.HandleFunc("GET /admin/metrics", apiCfg.metricsHandler)
 	server.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
-	server.HandleFunc("POST /admin/reset", apiCfg.metricsResetHandler)
+	server.HandleFunc("POST /admin/reset", apiCfg.handlerReset) 
 	server.HandleFunc("POST /api/validate_chirp", handlerChirpsValidate)
+	server.HandleFunc("POST /api/chirps", apiCfg.handlerCreateChirp)
 	server.Handle("GET /api/hello", middlewareLogger(middlewareAuth(http.HandlerFunc(helloHandler))))
 	if err := s.ListenAndServe(); err != nil {
 		fmt.Printf("Error while starting server: %s\n", err)

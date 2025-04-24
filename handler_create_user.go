@@ -9,7 +9,7 @@ import (
 func (a *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 
 	type inputParameters struct {
-		Body string `json:"body"`
+		Email string `json:"email"`
 	}
 
 
@@ -21,7 +21,7 @@ func (a *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := a.db.CreateUser(context.Background(), params.Body)
+	user, err := a.db.CreateUser(context.Background(), params.Email)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "Could not create user", err)
 		return
@@ -32,5 +32,5 @@ func (a *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 		UpdatedAt: user.UpdatedAt,
 		Email: user.Email,
 	}
-	respondWithJSON(w, http.StatusOK, responseValues)
+	respondWithJSON(w, http.StatusCreated, responseValues)
 }
