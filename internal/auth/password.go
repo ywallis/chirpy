@@ -1,9 +1,16 @@
 package auth
 
-import "golang.org/x/crypto/bcrypt"
+import (
+	"fmt"
+
+	"golang.org/x/crypto/bcrypt"
+)
 
 func HashPassword(password string) (string, error) {
 
+	if password == "" {
+		return "", fmt.Errorf("Password cannot be empty")
+	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), 2)
 	if err != nil {

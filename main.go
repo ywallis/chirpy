@@ -45,6 +45,7 @@ func main() {
 	server.HandleFunc("POST /admin/reset", apiCfg.handlerReset) 
 	server.HandleFunc("POST /api/validate_chirp", handlerChirpsValidate)
 	server.HandleFunc("POST /api/chirps", apiCfg.handlerCreateChirp)
+	server.HandleFunc("POST /api/login", apiCfg.handlerLogin)
 	server.HandleFunc("GET /api/chirps", apiCfg.handlerGetAllChirps)
 	server.HandleFunc("GET /api/chirps/{id}", apiCfg.handlerGetChirp)
 	server.Handle("GET /api/hello", middlewareLogger(middlewareAuth(http.HandlerFunc(helloHandler))))
