@@ -45,6 +45,8 @@ func main() {
 	server.HandleFunc("POST /admin/reset", apiCfg.handlerReset) 
 	server.HandleFunc("POST /api/validate_chirp", handlerChirpsValidate)
 	server.HandleFunc("POST /api/chirps", apiCfg.handlerCreateChirp)
+	server.HandleFunc("GET /api/chirps", apiCfg.handlerGetAllChirps)
+	server.HandleFunc("GET /api/chirps/{id}", apiCfg.handlerGetChirp)
 	server.Handle("GET /api/hello", middlewareLogger(middlewareAuth(http.HandlerFunc(helloHandler))))
 	if err := s.ListenAndServe(); err != nil {
 		fmt.Printf("Error while starting server: %s\n", err)
