@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ywallis/chirpy/internal/auth"
+	"github.com/ywallis/chirpy/internal/database"
 )
 
 func (a *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +53,11 @@ func (a *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		)
 		return
 	}
-	token, err := auth.MakeJWT(user.ID, a.JWTSecret, time.Duration(params.ExpirationSec)*time.Second)
+	accessToken, err := auth.MakeJWT(
+		user.ID,
+		a.JWTSecret,
+		time.Duration(params.ExpirationSec)*time.Second,
+	)
 	if err != nil {
 		respondWithError(
 			w,
@@ -62,12 +67,41 @@ func (a *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		)
 		return
 	}
+	refreshToken, err := auth.MakeRefreshToken()
+	if err != nil {
+		respondWithError(
+			w,
+			http.StatusInternalServerError,
+			"Could not generate refresh token",
+			err,
+		)
+		return
+	}
+	refreshTokenParams := database.CreateNewRefreshTokenParams{
+		Token:     refreshToken,
+		UserID:    user.ID,
+		ExpiresAt: time.Now().UTC().Add(time.Hour * 24 * 60),
+	}
+	refreshTokenDB, err := a.db.CreateNewRefreshToken(
+		context.Background(),
+		refreshTokenParams,
+	)
+	if err != nil {
+		respondWithError(
+			w,
+			http.StatusInternalServerError,
+			"Could not generate refresh token",
+			err,
+		)
+		return
+	}
 	output := User{
-		Id:        user.ID,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-		Email:     user.Email,
-		Token:     token,
+		Id:           user.ID,
+		CreatedAt:    user.CreatedAt,
+		UpdatedAt:    user.UpdatedAt,
+		Email:        user.Email,
+		AccessToken:  accessToken,
+		RefreshToken: refreshTokenDB.Token,
 	}
 	respondWithJSON(w, http.StatusOK, output)
 }
