@@ -12,9 +12,9 @@ import (
 
 func (a *apiConfig) handlerUpdateCredentials(w http.ResponseWriter, r *http.Request) {
 
-	type requestParams struct{
+	type requestParams struct {
 		Password string `json:"password"`
-		Email string `json:"email"`
+		Email    string `json:"email"`
 	}
 
 	token, err := auth.GetBearerToken(r.Header)
@@ -51,19 +51,19 @@ func (a *apiConfig) handlerUpdateCredentials(w http.ResponseWriter, r *http.Requ
 	}
 	hashedPw, err := auth.HashPassword(requestItem.Password)
 	updateParams := database.UpdateCredentialsParams{
-		Email:    requestItem.Email,
-		Password: hashedPw, 
+		Email:     requestItem.Email,
+		Password:  hashedPw,
 		UpdatedAt: time.Now().UTC(),
-		ID:  userID,
+		ID:        userID,
 	}
 	user, err := a.db.UpdateCredentials(context.Background(), updateParams)
 	responseParams := User{
-		Id:           user.ID,
-		CreatedAt:    user.CreatedAt,
-		UpdatedAt:    user.UpdatedAt,
-		Email:        user.Email,
+		Id:          user.ID,
+		CreatedAt:   user.CreatedAt,
+		UpdatedAt:   user.UpdatedAt,
+		Email:       user.Email,
+		IsChirpyRed: user.IsChirpyRed,
 	}
 	respondWithJSON(w, http.StatusOK, responseParams)
-
 
 }

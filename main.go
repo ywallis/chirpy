@@ -14,9 +14,10 @@ import (
 
 type apiConfig struct {
 	fileServerHits atomic.Int32
-	db *database.Queries
-	platform string
-	JWTSecret string
+	db             *database.Queries
+	platform       string
+	JWTSecret      string
+	polkaKey       string
 }
 
 func main() {
@@ -24,6 +25,7 @@ func main() {
 	dbURL := os.Getenv("DB_URL")
 	platform := os.Getenv("PLATFORM")
 	JWTSecret := os.Getenv("JWTSECRET")
+	polkaKey := os.Getenv("POLKA_KEY")
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		fmt.Println("Error opening DB")
@@ -31,7 +33,12 @@ func main() {
 	dbQueries := database.New(db)
 	const filePathRoot string = "."
 	const port string = "8080"
-	apiCfg := apiConfig{db: dbQueries, platform: platform, JWTSecret: JWTSecret}
+	apiCfg := apiConfig{
+		db: dbQueries,
+		platform: platform,
+		JWTSecret: JWTSecret,
+		polkaKey: polkaKey,
+	}
 	server := http.NewServeMux()
 
 	s := http.Server{
@@ -45,12 +52,13 @@ func main() {
 	server.HandleFunc("GET /admin/metrics", apiCfg.metricsHandler)
 	server.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
 	server.HandleFunc("PUT /api/users", apiCfg.handlerUpdateCredentials)
-	server.HandleFunc("POST /admin/reset", apiCfg.handlerReset) 
+	server.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
 	server.HandleFunc("POST /api/validate_chirp", handlerChirpsValidate)
 	server.HandleFunc("POST /api/chirps", apiCfg.handlerCreateChirp)
 	server.HandleFunc("POST /api/login", apiCfg.handlerLogin)
 	server.HandleFunc("POST /api/refresh", apiCfg.handlerRefresh)
 	server.HandleFunc("POST /api/revoke", apiCfg.handlerRevoke)
+	server.HandleFunc("POST /api/polka/webhooks", apiCfg.handlerUpgrade)
 	server.HandleFunc("GET /api/chirps", apiCfg.handlerGetAllChirps)
 	server.HandleFunc("GET /api/chirps/{id}", apiCfg.handlerGetChirp)
 	server.HandleFunc("DELETE /api/chirps/{id}", apiCfg.handlerDeleteChirp)

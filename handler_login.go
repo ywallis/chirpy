@@ -102,6 +102,7 @@ func (a *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		Email:        user.Email,
 		AccessToken:  accessToken,
 		RefreshToken: refreshTokenDB.Token,
+		IsChirpyRed:  user.IsChirpyRed,
 	}
 	respondWithJSON(w, http.StatusOK, output)
 }
